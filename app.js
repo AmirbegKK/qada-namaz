@@ -441,20 +441,16 @@ function toggleHaydFields() {
 function renderLibrary() {
   const featured = getQuoteOfDay();
   elements.libraryList.innerHTML = "";
-  window.NAMAZ_KEEPER_CONTENT.scholarQuotes.forEach((quote) => {
-    const card = document.createElement("article");
-    const isFeatured = quote.id === featured.id;
-    card.className = `quote-card${isFeatured ? " quote-card--featured" : ""}`;
-    const badge = isFeatured ? '<span class="quote-card__badge">Карточка дня</span>' : "";
-    card.innerHTML = `
-      ${badge}
-      <strong class="quote-card__title">${quote.title}</strong>
-      <p class="quote-card__body">${quote.body}</p>
-      <p class="quote-card__source">${quote.author} · ${quote.tradition}</p>
-      <p class="quote-card__source">${quote.source}</p>
-    `;
-    elements.libraryList.appendChild(card);
-  });
+  const card = document.createElement("article");
+  card.className = "quote-card quote-card--featured";
+  card.innerHTML = `
+    <span class="quote-card__badge">Карточка дня</span>
+    <strong class="quote-card__title">${featured.title}</strong>
+    <p class="quote-card__body">${featured.body}</p>
+    <p class="quote-card__source">${featured.author} · ${featured.tradition}</p>
+    <p class="quote-card__source">${featured.source}</p>
+  `;
+  elements.libraryList.appendChild(card);
 }
 
 function renderBackup() {
@@ -840,7 +836,8 @@ function getEnabledPrayerTypes(includeWitr) {
 function getQuoteOfDay() {
   const quotes = window.NAMAZ_KEEPER_CONTENT.scholarQuotes;
   const dayIndex = Math.floor(new Date().setHours(0, 0, 0, 0) / 86400000);
-  return quotes[Math.abs(dayIndex) % quotes.length];
+  const quoteIndex = Math.floor(Math.abs(dayIndex) / 2) % quotes.length;
+  return quotes[quoteIndex];
 }
 
 function getImportanceQuote() {
