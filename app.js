@@ -703,7 +703,7 @@ function getQuoteOfDay() {
 
 function shouldSuggestBackup(lastExportAt) {
   if (!lastExportAt) {
-    return true;
+    return false;
   }
   return Date.now() - new Date(lastExportAt).getTime() > 30 * 86400000;
 }
