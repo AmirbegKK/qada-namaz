@@ -28,6 +28,7 @@ const DEFAULT_STATE = {
     lastExportAt: null
   },
   ui: {
+    activeView: "home",
     minimalMode: false
   }
 };
@@ -41,6 +42,9 @@ const elements = {
   installApp: document.getElementById("install-app"),
   quoteChip: document.getElementById("quote-chip"),
   toggleMinimal: document.getElementById("toggle-minimal"),
+  viewButtons: Array.from(document.querySelectorAll("[data-view-target]")),
+  viewTabs: Array.from(document.querySelectorAll("[data-view-tab]")),
+  viewSections: Array.from(document.querySelectorAll("[data-view-section]")),
   statsGrid: document.getElementById("stats-grid"),
   dailyFocusCards: document.getElementById("daily-focus-cards"),
   dailyProgressPanel: document.getElementById("daily-progress-panel"),
@@ -100,6 +104,11 @@ function bindEvents() {
   elements.includeHayd.addEventListener("change", toggleHaydFields);
   elements.installApp.addEventListener("click", promptInstall);
   elements.toggleMinimal.addEventListener("click", toggleMinimalMode);
+  elements.viewButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      setActiveView(button.dataset.viewTarget);
+    });
+  });
 
   elements.historyFilters.forEach((button) => {
     button.addEventListener("click", () => {
@@ -252,6 +261,7 @@ function validateImportPayload(payload) {
 
 function render() {
   syncUiMode();
+  syncActiveView();
   renderDailyFocus();
   renderSummary();
   renderCalculation();
@@ -796,9 +806,29 @@ function toggleMinimalMode() {
 }
 
 function syncUiMode() {
-  document.body.classList.toggle("minimal-mode", Boolean(state.ui.minimalMode));
+  const minimalEnabled = Boolean(state.ui.minimalMode) && state.ui.activeView === "home";
+  document.body.classList.toggle("minimal-mode", minimalEnabled);
   const label = state.ui.minimalMode ? "Полный режим" : "Минимальный режим";
   elements.toggleMinimal.textContent = label;
+}
+
+function setActiveView(nextView) {
+  state.ui.activeView = nextView === "planner" ? "planner" : "home";
+  persistAndRender();
+}
+
+function syncActiveView() {
+  const activeView = state.ui.activeView === "planner" ? "planner" : "home";
+  document.body.dataset.activeView = activeView;
+  elements.viewButtons.forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.viewTarget === activeView);
+  });
+  elements.viewTabs.forEach((link) => {
+    link.hidden = link.dataset.viewTab !== activeView;
+  });
+  elements.viewSections.forEach((section) => {
+    section.hidden = section.dataset.viewSection !== activeView;
+  });
 }
 
 function getEnabledPrayerTypes(includeWitr) {

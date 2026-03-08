@@ -42,17 +42,26 @@
         <div class="notice notice--info" id="import-preview" hidden></div>
       </section>
 
+      <div class="view-switcher" aria-label="Основные экраны">
+        <button class="view-switcher__button is-active" type="button" data-view-target="home">
+          Главная
+        </button>
+        <button class="view-switcher__button" type="button" data-view-target="planner">
+          Расчёт и план
+        </button>
+      </div>
+
       <nav class="tabs" aria-label="Основные разделы">
-        <a class="tabs__link" href="#summary">Сводка</a>
-        <a class="tabs__link" href="#calculation">Расчёт</a>
-        <a class="tabs__link" href="#tracking">Учёт</a>
-        <a class="tabs__link" href="#planning">План</a>
-        <a class="tabs__link" href="#library">Мотивация</a>
-        <a class="tabs__link" href="#backup">Резерв</a>
+        <a class="tabs__link" href="#summary" data-view-tab="home">Сводка</a>
+        <a class="tabs__link" href="#tracking" data-view-tab="home">Учёт</a>
+        <a class="tabs__link" href="#library" data-view-tab="home">Мотивация</a>
+        <a class="tabs__link" href="#backup" data-view-tab="home">Резерв</a>
+        <a class="tabs__link" href="#calculation" data-view-tab="planner">Расчёт</a>
+        <a class="tabs__link" href="#planning" data-view-tab="planner">План</a>
       </nav>
 
       <main class="main-grid">
-        <section class="panel panel--focus" id="daily-focus">
+        <section class="panel panel--focus" id="daily-focus" data-view-section="home">
           <div class="panel__header">
             <div>
               <p class="panel__eyebrow">Сегодня</p>
@@ -74,7 +83,7 @@
           <div class="quick-actions quick-actions--hero" id="quick-actions-top"></div>
         </section>
 
-        <section class="panel panel--summary" id="summary">
+        <section class="panel panel--summary" id="summary" data-view-section="home">
           <div class="panel__header">
             <div>
               <p class="panel__eyebrow">Сводка</p>
@@ -95,7 +104,7 @@
           </div>
         </section>
 
-        <section class="panel" id="calculation">
+        <section class="panel panel--planner" id="calculation" data-view-section="planner">
           <div class="panel__header">
             <div>
               <p class="panel__eyebrow">Расчёт</p>
@@ -150,7 +159,7 @@
           <div class="mini-grid" id="calculation-breakdown"></div>
         </section>
 
-        <section class="panel" id="tracking">
+        <section class="panel" id="tracking" data-view-section="home">
           <div class="panel__header">
             <div>
               <p class="panel__eyebrow">Учёт</p>
@@ -197,7 +206,7 @@
           <div id="history-list" class="history-list"></div>
         </section>
 
-        <section class="panel" id="planning">
+        <section class="panel panel--planner" id="planning" data-view-section="planner">
           <div class="panel__header">
             <div>
               <p class="panel__eyebrow">План</p>
@@ -236,7 +245,7 @@
           <div class="mini-grid" id="plan-results"></div>
         </section>
 
-        <section class="panel" id="library">
+        <section class="panel" id="library" data-view-section="home">
           <div class="panel__header">
             <div>
               <p class="panel__eyebrow">Мотивация</p>
@@ -246,7 +255,7 @@
           <div class="library-grid" id="library-list"></div>
         </section>
 
-        <section class="panel" id="backup">
+        <section class="panel" id="backup" data-view-section="home">
           <div class="panel__header">
             <div>
               <p class="panel__eyebrow">Резерв</p>
