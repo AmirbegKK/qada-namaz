@@ -347,6 +347,12 @@ body::before {
   margin-bottom: 10px;
 }
 
+#settings-form .button[type="submit"],
+#plan-form .button[type="submit"] {
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
 .stack-form label,
 .file-label {
   display: grid;
