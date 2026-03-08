@@ -145,6 +145,7 @@ body::before {
 
 .panel {
   grid-column: span 6;
+  min-width: 0;
   padding: 24px;
   border-radius: var(--radius);
   background: var(--surface);
@@ -212,6 +213,7 @@ body::before {
 
 .stat-card,
 .quote-card {
+  min-width: 0;
   padding: 18px;
   border-radius: 18px;
   background: var(--surface-strong);
@@ -229,7 +231,10 @@ body::before {
 .stat-card__value {
   display: block;
   margin: 8px 0 6px;
-  font-size: 1.8rem;
+  font-size: clamp(1.6rem, 3vw, 1.8rem);
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   color: var(--accent-strong);
 }
 
@@ -248,6 +253,7 @@ body::before {
   justify-content: space-between;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .progress-panel__meta {
@@ -292,6 +298,7 @@ button {
 input,
 select {
   width: 100%;
+  max-width: 100%;
   padding: 13px 14px;
   border-radius: 14px;
   border: 1px solid rgba(31, 79, 70, 0.14);
@@ -320,6 +327,7 @@ button:focus-visible {
 .button {
   cursor: pointer;
   border: 0;
+  max-width: 100%;
   padding: 13px 18px;
   border-radius: 999px;
   background: var(--accent);
@@ -327,6 +335,8 @@ button:focus-visible {
   font-weight: 700;
   box-shadow: 0 12px 24px rgba(31, 79, 70, 0.18);
   transition: transform 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .button:hover,
@@ -398,6 +408,7 @@ button:focus-visible {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .history-item__side {
@@ -448,11 +459,13 @@ button:focus-visible {
 .quote-card__body {
   margin: 0 0 12px;
   line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
 .quote-card__source {
   margin: 0;
   font-size: 0.92rem;
+  overflow-wrap: anywhere;
 }
 
 .notice-stack {
@@ -527,9 +540,7 @@ button:focus-visible {
 .minimal-mode #backup,
 .minimal-mode .notice-stack,
 .minimal-mode .onboarding,
-.minimal-mode #progress-form,
-.minimal-mode .history-controls,
-.minimal-mode #history-list {
+.minimal-mode #tracking {
   display: none;
 }
 
@@ -605,9 +616,10 @@ button:focus-visible {
   }
 
   .panel__header h2 {
-    font-size: 1.1rem;
-    line-height: 1.05;
+    font-size: clamp(1.1rem, 6vw, 1.8rem);
+    line-height: 1.08;
     letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
   }
 
   .hero h1 {
@@ -681,6 +693,11 @@ button:focus-visible {
     padding: 11px 14px;
   }
 
+  .inline-actions .button,
+  .backup-actions .button {
+    width: 100%;
+  }
+
   .quick-actions .button {
     border-radius: 16px;
   }
@@ -697,10 +714,6 @@ button:focus-visible {
 
   .onboarding__intro {
     margin-bottom: 10px;
-  }
-
-  #daily-focus .panel__actions {
-    display: none;
   }
 
   .minimal-mode .hero__actions,

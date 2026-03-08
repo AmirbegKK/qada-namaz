@@ -45,7 +45,6 @@ const elements = {
   installApp: document.getElementById("install-app"),
   quoteChip: document.getElementById("quote-chip"),
   toggleMinimal: document.getElementById("toggle-minimal"),
-  toggleMinimalSecondary: document.getElementById("toggle-minimal-secondary"),
   statsGrid: document.getElementById("stats-grid"),
   dailyFocusCards: document.getElementById("daily-focus-cards"),
   onboardingPanel: document.getElementById("onboarding-panel"),
@@ -106,7 +105,6 @@ function bindEvents() {
   elements.planMode.addEventListener("change", togglePlanFields);
   elements.installApp.addEventListener("click", promptInstall);
   elements.toggleMinimal.addEventListener("click", toggleMinimalMode);
-  elements.toggleMinimalSecondary.addEventListener("click", toggleMinimalMode);
 
   elements.historyFilters.forEach((button) => {
     button.addEventListener("click", () => {
@@ -767,6 +765,14 @@ function sumCompletedForDate(progressLog, targetDate) {
 }
 
 function appendProgressEntry({ date, prayerType, count }) {
+  const existingEntry = state.progressLog.find((entry) => entry.date === date && entry.prayerType === prayerType);
+  if (existingEntry) {
+    existingEntry.count += count;
+    existingEntry.createdAt = new Date().toISOString();
+    state.progressLog = consolidateProgressLog(state.progressLog);
+    return;
+  }
+
   state.progressLog.unshift({
     id: createId(),
     date,
@@ -798,6 +804,7 @@ function editHistoryEntry(entryId) {
   entry.date = nextDate;
   entry.prayerType = nextPrayerType;
   entry.count = Math.max(1, Math.round(nextCount));
+  state.progressLog = consolidateProgressLog(state.progressLog);
   persistAndRender();
 }
 
@@ -822,7 +829,6 @@ function syncUiMode() {
   document.body.classList.toggle("minimal-mode", Boolean(state.ui.minimalMode));
   const label = state.ui.minimalMode ? "Полный режим" : "Минимальный режим";
   elements.toggleMinimal.textContent = label;
-  elements.toggleMinimalSecondary.textContent = label;
 }
 
 function readablePermission(permission) {
@@ -903,7 +909,7 @@ function normalizeState(input) {
       ...DEFAULT_STATE.settings,
       ...(input.settings || {})
     },
-    progressLog: Array.isArray(input.progressLog) ? input.progressLog : [],
+    progressLog: consolidateProgressLog(Array.isArray(input.progressLog) ? input.progressLog : []),
     plan: {
       ...DEFAULT_STATE.plan,
       ...(input.plan || {})
@@ -965,6 +971,48 @@ function addDays(date, count) {
 
 function createId() {
   return `id-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+}
+
+function consolidateProgressLog(progressLog) {
+  const grouped = new Map();
+
+  progressLog.forEach((entry) => {
+    if (!entry || !entry.date || !entry.prayerType) {
+      return;
+    }
+
+    const key = `${entry.date}::${entry.prayerType}`;
+    const count = Math.max(1, Number(entry.count || 0));
+    const existing = grouped.get(key);
+
+    if (existing) {
+      existing.count += count;
+      existing.createdAt = latestIso(existing.createdAt, entry.createdAt);
+      return;
+    }
+
+    grouped.set(key, {
+      id: entry.id || createId(),
+      date: entry.date,
+      prayerType: entry.prayerType,
+      count,
+      createdAt: entry.createdAt || new Date().toISOString()
+    });
+  });
+
+  return Array.from(grouped.values()).sort(compareProgressEntries);
+}
+
+function compareProgressEntries(left, right) {
+  const leftTime = new Date(left.createdAt || `${left.date}T00:00:00`).getTime();
+  const rightTime = new Date(right.createdAt || `${right.date}T00:00:00`).getTime();
+  return rightTime - leftTime;
+}
+
+function latestIso(left, right) {
+  const leftTime = new Date(left || 0).getTime();
+  const rightTime = new Date(right || 0).getTime();
+  return rightTime >= leftTime ? right : left;
 }
 
 function pluralize(value, forms) {
