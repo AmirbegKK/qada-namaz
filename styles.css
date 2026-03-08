@@ -342,6 +342,11 @@ body::before {
   gap: 14px;
 }
 
+#progress-form .button[type="submit"] {
+  margin-top: 6px;
+  margin-bottom: 10px;
+}
+
 .stack-form label,
 .file-label {
   display: grid;
