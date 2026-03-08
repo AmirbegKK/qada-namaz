@@ -47,6 +47,10 @@ const elements = {
   toggleMinimal: document.getElementById("toggle-minimal"),
   statsGrid: document.getElementById("stats-grid"),
   dailyFocusCards: document.getElementById("daily-focus-cards"),
+  dailyProgressPanel: document.getElementById("daily-progress-panel"),
+  dailyProgressPercent: document.getElementById("daily-progress-percent"),
+  dailyProgressBarFill: document.getElementById("daily-progress-bar-fill"),
+  dailyQuote: document.getElementById("daily-quote"),
   onboardingPanel: document.getElementById("onboarding-panel"),
   quickActionsTop: document.getElementById("quick-actions-top"),
   progressPercent: document.getElementById("progress-percent"),
@@ -552,6 +556,19 @@ function renderDailyFocus() {
     }
   ];
   mountMiniCards(elements.dailyFocusCards, cards);
+  const dailyPercent = metrics.dailyGoal > 0
+    ? Math.min(100, Math.round((metrics.completedToday / metrics.dailyGoal) * 100))
+    : 100;
+  elements.dailyProgressPercent.textContent = `${dailyPercent}%`;
+  elements.dailyProgressBarFill.style.width = `${dailyPercent}%`;
+  elements.dailyProgressPanel.hidden = metrics.dailyGoal === 0 && metrics.completedToday === 0;
+
+  const quote = getImportanceQuote();
+  elements.dailyQuote.innerHTML = `
+    <strong class="quote-card__title">${quote.title}</strong>
+    <p class="quote-card__body">${quote.body}</p>
+    <p class="quote-card__source">${quote.author}</p>
+  `;
   renderOnboarding(metrics);
 }
 
@@ -859,6 +876,14 @@ function getQuoteOfDay() {
   const quotes = window.NAMAZ_KEEPER_CONTENT.scholarQuotes;
   const dayIndex = Math.floor(new Date().setHours(0, 0, 0, 0) / 86400000);
   return quotes[Math.abs(dayIndex) % quotes.length];
+}
+
+function getImportanceQuote() {
+  return {
+    title: "Важность намаза",
+    body: "Обязательные молитвы занимают высочайшее место после свидетельства веры.",
+    author: "Имам ан-Навави"
+  };
 }
 
 function shouldSuggestBackup(lastExportAt) {

@@ -203,6 +203,18 @@ body::before {
   margin-bottom: 16px;
 }
 
+.progress-panel--compact {
+  margin-top: 0;
+  margin-bottom: 12px;
+  padding: 16px 18px;
+}
+
+.quote-card--daily {
+  margin-bottom: 14px;
+  background:
+    linear-gradient(160deg, rgba(212, 237, 228, 0.42), rgba(255, 250, 241, 0.94));
+}
+
 .mini-grid {
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
@@ -645,7 +657,7 @@ button:focus-visible {
   }
 
   .hero-cards {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
     margin-bottom: 10px;
   }
@@ -684,6 +696,10 @@ button:focus-visible {
     margin-top: 12px;
     padding: 14px;
     border-radius: 16px;
+  }
+
+  .progress-panel--compact {
+    margin-bottom: 10px;
   }
 
   .progress-bar {
@@ -741,6 +757,7 @@ button:focus-visible {
   }
 
   .minimal-mode .hero-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
     margin-bottom: 8px;
   }
