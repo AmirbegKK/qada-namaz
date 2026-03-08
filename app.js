@@ -24,12 +24,6 @@ const DEFAULT_STATE = {
     deadline: formatDateLocal(addDays(new Date(), 180)),
     dailyLoad: 5
   },
-  reminderSettings: {
-    enabled: false,
-    time: "20:30",
-    messageIndex: 0,
-    notificationsPermission: typeof Notification === "undefined" ? "unsupported" : Notification.permission
-  },
   backupMeta: {
     lastExportAt: null
   },
@@ -80,15 +74,8 @@ const elements = {
   planDeadline: document.getElementById("plan-deadline"),
   planDailyLoad: document.getElementById("plan-daily-load"),
   planResults: document.getElementById("plan-results"),
-  remindersForm: document.getElementById("reminders-form"),
-  reminderEnabled: document.getElementById("reminder-enabled"),
-  reminderTime: document.getElementById("reminder-time"),
-  reminderMessage: document.getElementById("reminder-message"),
-  reminderStatus: document.getElementById("reminder-status"),
-  requestNotifications: document.getElementById("request-notifications"),
   libraryList: document.getElementById("library-list"),
   backupBanner: document.getElementById("backup-banner"),
-  reminderBanner: document.getElementById("reminder-banner"),
   importPreview: document.getElementById("import-preview"),
   exportData: document.getElementById("export-data"),
   importFile: document.getElementById("import-file"),
@@ -107,10 +94,8 @@ function bindEvents() {
   elements.settingsForm.addEventListener("submit", handleSettingsSubmit);
   elements.progressForm.addEventListener("submit", handleProgressSubmit);
   elements.planForm.addEventListener("submit", handlePlanSubmit);
-  elements.remindersForm.addEventListener("submit", handleReminderSubmit);
   elements.exportData.addEventListener("click", exportData);
   elements.importFile.addEventListener("change", handleImportFile);
-  elements.requestNotifications.addEventListener("click", requestNotificationsPermission);
   elements.planMode.addEventListener("change", togglePlanFields);
   elements.includeHayd.addEventListener("change", toggleHaydFields);
   elements.installApp.addEventListener("click", promptInstall);
@@ -133,7 +118,6 @@ function bindEvents() {
 
 function hydrateForms() {
   populatePrayerOptions();
-  populateReminderMessages();
   elements.startDate.value = state.settings.startDate;
   elements.endDate.value = state.settings.endDate;
   elements.includeWitr.checked = state.settings.includeWitr;
@@ -144,9 +128,6 @@ function hydrateForms() {
   elements.planMode.value = state.plan.mode;
   elements.planDeadline.value = state.plan.deadline;
   elements.planDailyLoad.value = state.plan.dailyLoad;
-  elements.reminderEnabled.checked = state.reminderSettings.enabled;
-  elements.reminderTime.value = state.reminderSettings.time;
-  elements.reminderMessage.value = String(state.reminderSettings.messageIndex);
   toggleHaydFields();
   togglePlanFields();
 }
@@ -159,16 +140,6 @@ function populatePrayerOptions() {
     option.value = type;
     option.textContent = PRAYER_LABELS[type];
     elements.progressPrayer.appendChild(option);
-  });
-}
-
-function populateReminderMessages() {
-  elements.reminderMessage.innerHTML = "";
-  window.NAMAZ_KEEPER_CONTENT.reminderMessages.forEach((message, index) => {
-    const option = document.createElement("option");
-    option.value = String(index);
-    option.textContent = message;
-    elements.reminderMessage.appendChild(option);
   });
 }
 
@@ -209,32 +180,6 @@ function handlePlanSubmit(event) {
   state.plan.deadline = elements.planDeadline.value || formatDateLocal(addDays(new Date(), 180));
   state.plan.dailyLoad = Math.max(1, Number(elements.planDailyLoad.value) || 1);
   persistAndRender();
-}
-
-function handleReminderSubmit(event) {
-  event.preventDefault();
-  state.reminderSettings.enabled = elements.reminderEnabled.checked;
-  state.reminderSettings.time = elements.reminderTime.value || "20:30";
-  state.reminderSettings.messageIndex = Number(elements.reminderMessage.value) || 0;
-  state.reminderSettings.notificationsPermission =
-    typeof Notification === "undefined" ? "unsupported" : Notification.permission;
-  persistAndRender();
-}
-
-function requestNotificationsPermission() {
-  if (typeof Notification === "undefined") {
-    alert("Этот браузер не поддерживает системные уведомления.");
-    return;
-  }
-  Notification.requestPermission().then((permission) => {
-    state.reminderSettings.notificationsPermission = permission;
-    persistAndRender();
-    if (permission === "granted") {
-      new Notification("NamazKeeper", {
-        body: getReminderMessage()
-      });
-    }
-  });
 }
 
 function exportData() {
@@ -313,7 +258,6 @@ function render() {
   renderQuickActions();
   renderHistory();
   renderPlan();
-  renderReminders();
   renderLibrary();
   renderBackup();
   renderBanners();
@@ -484,27 +428,6 @@ function toggleHaydFields() {
   elements.haydFields.hidden = !enabled;
 }
 
-function renderReminders() {
-  const reminderCards = [
-    {
-      label: "Статус",
-      value: state.reminderSettings.enabled ? "Включено" : "Выключено",
-      hint: "Внутренний баннер и уведомления"
-    },
-    {
-      label: "Время",
-      value: state.reminderSettings.time,
-      hint: "Ежедневный ориентир"
-    },
-    {
-      label: "Уведомления",
-      value: readablePermission(state.reminderSettings.notificationsPermission),
-      hint: "Поддержка браузера"
-    }
-  ];
-  mountMiniCards(elements.reminderStatus, reminderCards);
-}
-
 function renderLibrary() {
   const featured = getQuoteOfDay();
   elements.libraryList.innerHTML = "";
@@ -541,8 +464,6 @@ function renderBackup() {
 }
 
 function renderBanners() {
-  const metrics = calculateMetrics(state);
-  const reminderDue = isReminderDue(state.reminderSettings);
   const needsBackup = shouldSuggestBackup(state.backupMeta.lastExportAt);
 
   if (needsBackup) {
@@ -552,15 +473,6 @@ function renderBanners() {
     );
   } else {
     hideNotice(elements.backupBanner);
-  }
-
-  if (state.reminderSettings.enabled && reminderDue && metrics.remainingTotal > 0) {
-    showNotice(
-      elements.reminderBanner,
-      `${getReminderMessage()} Сегодняшняя ориентировочная норма: ${metrics.dailyGoal}.`
-    );
-  } else {
-    hideNotice(elements.reminderBanner);
   }
 }
 
@@ -889,28 +801,10 @@ function syncUiMode() {
   elements.toggleMinimal.textContent = label;
 }
 
-function readablePermission(permission) {
-  if (permission === "granted") {
-    return "Разрешены";
-  }
-  if (permission === "denied") {
-    return "Запрещены";
-  }
-  if (permission === "unsupported") {
-    return "Не поддерживаются";
-  }
-  return "Не запрошены";
-}
-
 function getEnabledPrayerTypes(includeWitr) {
   return includeWitr
     ? ["fajr", "dhuhr", "asr", "maghrib", "isha", "witr"]
     : ["fajr", "dhuhr", "asr", "maghrib", "isha"];
-}
-
-function getReminderMessage() {
-  const index = state.reminderSettings.messageIndex || 0;
-  return window.NAMAZ_KEEPER_CONTENT.reminderMessages[index] || window.NAMAZ_KEEPER_CONTENT.reminderMessages[0];
 }
 
 function getQuoteOfDay() {
@@ -932,17 +826,6 @@ function shouldSuggestBackup(lastExportAt) {
     return false;
   }
   return Date.now() - new Date(lastExportAt).getTime() > 30 * 86400000;
-}
-
-function isReminderDue(reminderSettings) {
-  if (!reminderSettings.enabled) {
-    return false;
-  }
-  const [hours, minutes] = (reminderSettings.time || "20:30").split(":").map(Number);
-  const now = new Date();
-  const scheduled = new Date();
-  scheduled.setHours(hours || 0, minutes || 0, 0, 0);
-  return now >= scheduled;
 }
 
 function showNotice(node, text) {
@@ -979,10 +862,6 @@ function normalizeState(input) {
     plan: {
       ...DEFAULT_STATE.plan,
       ...(input.plan || {})
-    },
-    reminderSettings: {
-      ...DEFAULT_STATE.reminderSettings,
-      ...(input.reminderSettings || {})
     },
     backupMeta: {
       ...DEFAULT_STATE.backupMeta,

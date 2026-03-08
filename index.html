@@ -39,7 +39,6 @@
 
       <section class="notice-stack">
         <div class="notice notice--backup" id="backup-banner" hidden></div>
-        <div class="notice notice--warning" id="reminder-banner" hidden></div>
         <div class="notice notice--info" id="import-preview" hidden></div>
       </section>
 
@@ -48,7 +47,6 @@
         <a class="tabs__link" href="#calculation">Расчёт</a>
         <a class="tabs__link" href="#tracking">Учёт</a>
         <a class="tabs__link" href="#planning">План</a>
-        <a class="tabs__link" href="#reminders">Напоминания</a>
         <a class="tabs__link" href="#library">Мотивация</a>
         <a class="tabs__link" href="#backup">Резерв</a>
       </nav>
@@ -236,36 +234,6 @@
             <button class="button" type="submit">Обновить план</button>
           </form>
           <div class="mini-grid" id="plan-results"></div>
-        </section>
-
-        <section class="panel" id="reminders">
-          <div class="panel__header">
-            <div>
-              <p class="panel__eyebrow">Напоминания</p>
-              <h2>Ежедневный режим</h2>
-            </div>
-          </div>
-          <form id="reminders-form" class="stack-form">
-            <label class="checkbox-row">
-              <input type="checkbox" id="reminder-enabled" />
-              <span>Показывать ежедневное напоминание</span>
-            </label>
-            <label>
-              Время напоминания
-              <input type="time" id="reminder-time" />
-            </label>
-            <label>
-              Текст напоминания
-              <select id="reminder-message"></select>
-            </label>
-            <div class="inline-actions">
-              <button class="button" type="submit">Сохранить</button>
-              <button class="button button--ghost" type="button" id="request-notifications">
-                Разрешить уведомления
-              </button>
-            </div>
-          </form>
-          <div class="mini-grid" id="reminder-status"></div>
         </section>
 
         <section class="panel" id="library">
