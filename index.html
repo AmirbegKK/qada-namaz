@@ -23,10 +23,13 @@
             <h1>Учёт къада-намазов</h1>
             <p>
               Рассчитайте долг, отмечайте выполненные намазы и держите дневной
-              ритм без лишней перегрузки интерфейса.
+              ритм.
             </p>
           </div>
           <div class="hero__actions">
+            <button class="button button--ghost" id="toggle-theme" type="button">
+              Ночная тема
+            </button>
             <button class="button button--ghost" id="toggle-minimal" type="button">
               Минимальный режим
             </button>
@@ -54,7 +57,6 @@
       <nav class="tabs" aria-label="Основные разделы">
         <a class="tabs__link" href="#summary" data-view-tab="home">Сводка</a>
         <a class="tabs__link" href="#tracking" data-view-tab="home">Учёт</a>
-        <a class="tabs__link" href="#library" data-view-tab="home">Мотивация</a>
         <a class="tabs__link" href="#calculation" data-view-tab="planner">Расчёт</a>
         <a class="tabs__link" href="#planning" data-view-tab="planner">План</a>
         <a class="tabs__link" href="#backup" data-view-tab="planner">Резерв</a>
@@ -81,27 +83,6 @@
           <div class="quote-card quote-card--daily" id="daily-quote"></div>
           <div class="onboarding" id="onboarding-panel"></div>
           <div class="quick-actions quick-actions--hero" id="quick-actions-top"></div>
-        </section>
-
-        <section class="panel panel--summary" id="summary" data-view-section="home">
-          <div class="panel__header">
-            <div>
-              <p class="panel__eyebrow">Сводка</p>
-              <h2>Текущий статус</h2>
-            </div>
-            <div class="quote-chip" id="quote-chip"></div>
-          </div>
-          <div class="stats-grid" id="stats-grid"></div>
-          <div class="progress-panel">
-            <div class="progress-panel__row">
-              <span>Прогресс</span>
-              <strong id="progress-percent">0%</strong>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-bar__fill" id="progress-bar-fill"></div>
-            </div>
-            <div class="progress-panel__meta" id="summary-meta"></div>
-          </div>
         </section>
 
         <section class="panel panel--planner" id="calculation" data-view-section="planner">
@@ -159,51 +140,76 @@
           <div class="mini-grid" id="calculation-breakdown"></div>
         </section>
 
-        <section class="panel" id="tracking" data-view-section="home">
+        <section class="panel panel--tracking" id="tracking" data-view-section="home">
           <div class="panel__header">
             <div>
               <p class="panel__eyebrow">Учёт</p>
-              <h2>Отметка выполненных къада</h2>
+              <h2>Быстрое отмечание</h2>
             </div>
           </div>
-          <form id="progress-form" class="stack-form">
-            <label>
-              Дата
-              <input type="date" id="progress-date" required />
-            </label>
-            <label>
-              Намаз
-              <select id="progress-prayer" required></select>
-            </label>
-            <label>
-              Количество
-              <input
-                type="number"
-                id="progress-count"
-                min="1"
-                value="1"
-                step="1"
-                inputmode="numeric"
-                required
-              />
-            </label>
-            <button class="button" type="submit">Добавить запись</button>
-          </form>
+          <div class="tracking-manual">
+            <button class="button button--ghost" id="toggle-manual-entry" type="button">
+              Добавить вручную
+            </button>
+          </div>
+          <div class="tracking-manual__panel" id="manual-entry-panel" hidden>
+            <form id="progress-form" class="stack-form">
+              <label>
+                Дата
+                <input type="date" id="progress-date" required />
+              </label>
+              <label>
+                Намаз
+                <select id="progress-prayer" required></select>
+              </label>
+              <label>
+                Количество
+                <input
+                  type="number"
+                  id="progress-count"
+                  min="1"
+                  value="1"
+                  step="1"
+                  inputmode="numeric"
+                  required
+                />
+              </label>
+              <button class="button" type="submit">Добавить запись</button>
+            </form>
+          </div>
+        </section>
+
+        <section class="panel panel--history" id="history-panel" data-view-section="home">
           <div class="history-controls">
-            <span>Журнал</span>
-            <div class="segmented">
-              <button class="segmented__item is-active" data-history-filter="today">
-                Сегодня
-              </button>
-              <button class="segmented__item" data-history-filter="week">
-                Неделя
-              </button>
-              <button class="segmented__item" data-history-filter="all">
-                Всё
-              </button>
+            <div>
+              <p class="panel__eyebrow">Журнал</p>
+              <h2>Последние записи</h2>
             </div>
+            <button class="button button--ghost" id="toggle-history-view" type="button">
+              Показать всё
+            </button>
           </div>
           <div id="history-list" class="history-list"></div>
+        </section>
+
+        <section class="panel panel--summary panel--summary-compact" id="summary" data-view-section="home">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Сводка</p>
+              <h2>Текущий статус</h2>
+            </div>
+          </div>
+          <div class="stats-grid" id="stats-grid"></div>
+          <div class="progress-panel progress-panel--summary-compact">
+            <div class="progress-panel__row">
+              <span>Прогресс</span>
+              <strong id="progress-percent">0%</strong>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-bar__fill" id="progress-bar-fill"></div>
+            </div>
+            <div class="progress-panel__meta" id="summary-meta"></div>
+          </div>
         </section>
 
         <section class="panel panel--planner" id="planning" data-view-section="planner">
@@ -243,16 +249,6 @@
             <button class="button" type="submit">Обновить план</button>
           </form>
           <div class="mini-grid" id="plan-results"></div>
-        </section>
-
-        <section class="panel" id="library" data-view-section="home">
-          <div class="panel__header">
-            <div>
-              <p class="panel__eyebrow">Мотивация</p>
-              <h2>Карточки дня</h2>
-            </div>
-          </div>
-          <div class="library-grid" id="library-list"></div>
         </section>
 
         <section class="panel panel--planner" id="backup" data-view-section="planner">

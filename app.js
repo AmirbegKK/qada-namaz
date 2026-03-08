@@ -29,18 +29,20 @@ const DEFAULT_STATE = {
   },
   ui: {
     activeView: "home",
-    minimalMode: false
+    theme: "light",
+    minimalMode: false,
+    showManualEntryForm: false,
+    showFullHistory: false
   }
 };
 
 let state = loadState();
-let currentHistoryFilter = "today";
 let pendingImportPayload = null;
 let deferredInstallPrompt = null;
 
 const elements = {
   installApp: document.getElementById("install-app"),
-  quoteChip: document.getElementById("quote-chip"),
+  toggleTheme: document.getElementById("toggle-theme"),
   toggleMinimal: document.getElementById("toggle-minimal"),
   viewButtons: Array.from(document.querySelectorAll("[data-view-target]")),
   viewTabs: Array.from(document.querySelectorAll("[data-view-tab]")),
@@ -53,6 +55,8 @@ const elements = {
   dailyQuote: document.getElementById("daily-quote"),
   onboardingPanel: document.getElementById("onboarding-panel"),
   quickActionsTop: document.getElementById("quick-actions-top"),
+  toggleManualEntry: document.getElementById("toggle-manual-entry"),
+  manualEntryPanel: document.getElementById("manual-entry-panel"),
   progressPercent: document.getElementById("progress-percent"),
   progressBarFill: document.getElementById("progress-bar-fill"),
   summaryMeta: document.getElementById("summary-meta"),
@@ -70,7 +74,7 @@ const elements = {
   progressPrayer: document.getElementById("progress-prayer"),
   progressCount: document.getElementById("progress-count"),
   historyList: document.getElementById("history-list"),
-  historyFilters: Array.from(document.querySelectorAll("[data-history-filter]")),
+  toggleHistoryView: document.getElementById("toggle-history-view"),
   planForm: document.getElementById("plan-form"),
   planMode: document.getElementById("plan-mode"),
   deadlineFields: document.getElementById("deadline-fields"),
@@ -78,7 +82,6 @@ const elements = {
   planDeadline: document.getElementById("plan-deadline"),
   planDailyLoad: document.getElementById("plan-daily-load"),
   planResults: document.getElementById("plan-results"),
-  libraryList: document.getElementById("library-list"),
   backupBanner: document.getElementById("backup-banner"),
   importPreview: document.getElementById("import-preview"),
   exportData: document.getElementById("export-data"),
@@ -103,18 +106,13 @@ function bindEvents() {
   elements.planMode.addEventListener("change", togglePlanFields);
   elements.includeHayd.addEventListener("change", toggleHaydFields);
   elements.installApp.addEventListener("click", promptInstall);
+  elements.toggleTheme.addEventListener("click", toggleTheme);
   elements.toggleMinimal.addEventListener("click", toggleMinimalMode);
+  elements.toggleManualEntry.addEventListener("click", toggleManualEntryForm);
+  elements.toggleHistoryView.addEventListener("click", toggleHistoryView);
   elements.viewButtons.forEach((button) => {
     button.addEventListener("click", () => {
       setActiveView(button.dataset.viewTarget);
-    });
-  });
-
-  elements.historyFilters.forEach((button) => {
-    button.addEventListener("click", () => {
-      currentHistoryFilter = button.dataset.historyFilter;
-      elements.historyFilters.forEach((item) => item.classList.toggle("is-active", item === button));
-      renderHistory();
     });
   });
 
@@ -268,7 +266,6 @@ function render() {
   renderQuickActions();
   renderHistory();
   renderPlan();
-  renderLibrary();
   renderBackup();
   renderBanners();
 }
@@ -276,16 +273,6 @@ function render() {
 function renderSummary() {
   const metrics = calculateMetrics(state);
   const cards = [
-    {
-      label: "Общий долг",
-      value: String(metrics.totalDebt),
-      hint: "Расчёт от выбранной даты"
-    },
-    {
-      label: "Выполнено",
-      value: String(metrics.completedApplied),
-      hint: "Учтено в остатке"
-    },
     {
       label: "Осталось",
       value: String(metrics.remainingTotal),
@@ -313,8 +300,6 @@ function renderSummary() {
       ? "Долг закрыт. Можно поддерживать дисциплину и архивировать журнал."
       : `Прогноз завершения: ${metrics.predictedCompletionLabel}. Недельная цель: ${metrics.weeklyGoal}.`;
 
-  const quote = getQuoteOfDay();
-  elements.quoteChip.innerHTML = `<strong>${quote.author}</strong><br />${quote.body}`;
 }
 
 function renderCalculation() {
@@ -354,13 +339,17 @@ function renderQuickActions() {
 }
 
 function renderHistory() {
-  const filteredItems = filterHistory(state.progressLog, currentHistoryFilter);
+  const filteredItems = filterHistory(state.progressLog, "all");
+  const visibleItems = state.ui.showFullHistory ? filteredItems : filteredItems.slice(0, 3);
   elements.historyList.innerHTML = "";
-  if (filteredItems.length === 0) {
+  if (visibleItems.length === 0) {
     elements.historyList.innerHTML = '<div class="notice">Пока нет записей для выбранного периода.</div>';
+    elements.toggleHistoryView.hidden = true;
     return;
   }
-  filteredItems.forEach((entry) => {
+  elements.toggleHistoryView.hidden = filteredItems.length <= 3;
+  elements.toggleHistoryView.textContent = state.ui.showFullHistory ? "Скрыть" : "Показать всё";
+  visibleItems.forEach((entry) => {
     const item = document.createElement("article");
     item.className = "history-item";
     item.innerHTML = `
@@ -438,18 +427,14 @@ function toggleHaydFields() {
   elements.haydFields.hidden = !enabled;
 }
 
-function renderLibrary() {
-  const featured = getQuoteOfDay();
-  elements.libraryList.innerHTML = "";
-  const card = document.createElement("article");
-  card.className = "quote-card quote-card--featured";
-  card.innerHTML = `
-    <span class="quote-card__badge">Карточка дня</span>
-    <strong class="quote-card__title">${featured.title}</strong>
-    <p class="quote-card__body">${featured.body}</p>
-    <p class="quote-card__source">${featured.author}</p>
-  `;
-  elements.libraryList.appendChild(card);
+function toggleManualEntryForm() {
+  state.ui.showManualEntryForm = !state.ui.showManualEntryForm;
+  persistAndRender();
+}
+
+function toggleHistoryView() {
+  state.ui.showFullHistory = !state.ui.showFullHistory;
+  persistAndRender();
 }
 
 function renderBackup() {
@@ -503,8 +488,9 @@ function renderDailyFocus() {
   elements.dailyProgressBarFill.style.width = `${dailyPercent}%`;
   elements.dailyProgressPanel.hidden = metrics.dailyGoal === 0 && metrics.completedToday === 0;
 
-  const quote = getImportanceQuote();
+  const quote = getQuoteOfDay();
   elements.dailyQuote.innerHTML = `
+    <span class="quote-card__badge">Важность намаза</span>
     <strong class="quote-card__title">${quote.title}</strong>
     <p class="quote-card__body">${quote.body}</p>
     <p class="quote-card__source">${quote.author}</p>
@@ -800,16 +786,33 @@ function toggleMinimalMode() {
   persistAndRender();
 }
 
+function toggleTheme() {
+  state.ui.theme = state.ui.theme === "dark" ? "light" : "dark";
+  persistAndRender();
+}
+
 function syncUiMode() {
-  const minimalEnabled = Boolean(state.ui.minimalMode) && state.ui.activeView === "home";
+  const minimalEnabled = Boolean(state.ui.minimalMode);
   document.body.classList.toggle("minimal-mode", minimalEnabled);
+  const theme = state.ui.theme === "dark" ? "dark" : "light";
+  document.body.dataset.theme = theme;
+  const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeColorMeta) {
+    themeColorMeta.setAttribute("content", theme === "dark" ? "#0f231f" : "#1f4f46");
+  }
+  elements.toggleTheme.textContent = theme === "dark" ? "Светлая тема" : "Ночная тема";
   const label = state.ui.minimalMode ? "Полный режим" : "Минимальный режим";
   elements.toggleMinimal.textContent = label;
+  elements.manualEntryPanel.hidden = !state.ui.showManualEntryForm;
+  elements.toggleManualEntry.textContent = state.ui.showManualEntryForm ? "Скрыть форму" : "Добавить вручную";
 }
 
 function setActiveView(nextView) {
   state.ui.activeView = nextView === "planner" ? "planner" : "home";
   persistAndRender();
+  const nextUrl = `${window.location.pathname}${window.location.search}`;
+  window.history.replaceState(null, "", nextUrl);
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 }
 
 function syncActiveView() {
@@ -837,14 +840,6 @@ function getQuoteOfDay() {
   const dayIndex = Math.floor(new Date().setHours(0, 0, 0, 0) / 86400000);
   const quoteIndex = Math.floor(Math.abs(dayIndex) / 2) % quotes.length;
   return quotes[quoteIndex];
-}
-
-function getImportanceQuote() {
-  return {
-    title: "Важность намаза",
-    body: "Обязательные молитвы занимают высочайшее место после свидетельства веры.",
-    author: "Имам ан-Навави"
-  };
 }
 
 function shouldSuggestBackup(lastExportAt) {
@@ -879,6 +874,11 @@ function loadState() {
 }
 
 function normalizeState(input) {
+  const nextUi = {
+    ...DEFAULT_STATE.ui,
+    ...(input.ui || {})
+  };
+  nextUi.theme = nextUi.theme === "dark" ? "dark" : "light";
   return {
     settings: {
       ...DEFAULT_STATE.settings,
@@ -893,10 +893,7 @@ function normalizeState(input) {
       ...DEFAULT_STATE.backupMeta,
       ...(input.backupMeta || {})
     },
-    ui: {
-      ...DEFAULT_STATE.ui,
-      ...(input.ui || {})
-    }
+    ui: nextUi
   };
 }
 
@@ -1004,8 +1001,10 @@ function shouldShowOnboarding() {
     state.settings.startDate !== DEFAULT_STATE.settings.startDate ||
     state.settings.endDate !== DEFAULT_STATE.settings.endDate ||
     Number(state.settings.manualAdjustment || 0) !== 0 ||
-    state.settings.includeWitr !== DEFAULT_STATE.settings.includeWitr;
-  return !hasProgress || !hasCustomRange;
+    state.settings.includeWitr !== DEFAULT_STATE.settings.includeWitr ||
+    state.settings.includeHayd !== DEFAULT_STATE.settings.includeHayd ||
+    Number(state.settings.averageHaydDaysPerMonth || 0) !== Number(DEFAULT_STATE.settings.averageHaydDaysPerMonth || 0);
+  return !hasProgress && !hasCustomRange;
 }
 
 async function promptInstall() {
