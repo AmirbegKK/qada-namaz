@@ -1,0 +1,24 @@
+{
+  "name": "NamazKeeper",
+  "short_name": "NamazKeeper",
+  "description": "Учёт къада-намазов, планирование восполнения и локальные резервные копии.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5efdf",
+  "theme_color": "#1f4f46",
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

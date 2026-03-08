@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="NamazKeeper помогает считать къада-намазы, отслеживать прогресс и строить план восполнения."
+    />
+    <meta name="theme-color" content="#1f4f46" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icons/icon.svg" />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>NamazKeeper</title>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero">
+        <div class="hero__eyebrow">NamazKeeper</div>
+        <div class="hero__content">
+          <div>
+            <h1>Учёт къада-намазов без сервера</h1>
+            <p>
+              Рассчитайте долг, отмечайте выполненные намазы, стройте план
+              закрытия и храните данные локально с резервной копией.
+            </p>
+          </div>
+          <button class="button button--ghost" id="install-app" hidden>
+            Установить приложение
+          </button>
+        </div>
+      </header>
+
+      <section class="notice-stack">
+        <div class="notice notice--backup" id="backup-banner" hidden></div>
+        <div class="notice notice--warning" id="reminder-banner" hidden></div>
+        <div class="notice notice--info" id="import-preview" hidden></div>
+      </section>
+
+      <nav class="tabs" aria-label="Основные разделы">
+        <a class="tabs__link" href="#summary">Сводка</a>
+        <a class="tabs__link" href="#calculation">Расчёт</a>
+        <a class="tabs__link" href="#tracking">Учёт</a>
+        <a class="tabs__link" href="#planning">План</a>
+        <a class="tabs__link" href="#reminders">Напоминания</a>
+        <a class="tabs__link" href="#library">Мотивация</a>
+        <a class="tabs__link" href="#backup">Резерв</a>
+      </nav>
+
+      <main class="main-grid">
+        <section class="panel panel--summary" id="summary">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Сводка</p>
+              <h2>Текущий статус</h2>
+            </div>
+            <div class="quote-chip" id="quote-chip"></div>
+          </div>
+          <div class="stats-grid" id="stats-grid"></div>
+          <div class="progress-panel">
+            <div class="progress-panel__row">
+              <span>Прогресс</span>
+              <strong id="progress-percent">0%</strong>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-bar__fill" id="progress-bar-fill"></div>
+            </div>
+            <div class="progress-panel__meta" id="summary-meta"></div>
+          </div>
+        </section>
+
+        <section class="panel" id="calculation">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Расчёт</p>
+              <h2>Исходный долг</h2>
+            </div>
+          </div>
+          <form id="settings-form" class="stack-form">
+            <label>
+              Дата начала долга
+              <input type="date" id="start-date" required />
+            </label>
+            <label>
+              Дата конца расчёта
+              <input type="date" id="end-date" required />
+            </label>
+            <label class="checkbox-row">
+              <input type="checkbox" id="include-witr" />
+              <span>Добавить витр в расчёт и учёт</span>
+            </label>
+            <label>
+              Ручная корректировка общего долга
+              <input
+                type="number"
+                id="manual-adjustment"
+                value="0"
+                step="1"
+                inputmode="numeric"
+              />
+            </label>
+            <button class="button" type="submit">Пересчитать</button>
+          </form>
+          <div class="mini-grid" id="calculation-breakdown"></div>
+        </section>
+
+        <section class="panel" id="tracking">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Учёт</p>
+              <h2>Отметка выполненных къада</h2>
+            </div>
+          </div>
+          <form id="progress-form" class="stack-form">
+            <label>
+              Дата
+              <input type="date" id="progress-date" required />
+            </label>
+            <label>
+              Намаз
+              <select id="progress-prayer" required></select>
+            </label>
+            <label>
+              Количество
+              <input
+                type="number"
+                id="progress-count"
+                min="1"
+                value="1"
+                step="1"
+                inputmode="numeric"
+                required
+              />
+            </label>
+            <button class="button" type="submit">Добавить запись</button>
+          </form>
+          <div class="quick-actions" id="quick-actions"></div>
+          <div class="history-controls">
+            <span>Журнал</span>
+            <div class="segmented">
+              <button class="segmented__item is-active" data-history-filter="today">
+                Сегодня
+              </button>
+              <button class="segmented__item" data-history-filter="week">
+                Неделя
+              </button>
+              <button class="segmented__item" data-history-filter="all">
+                Всё
+              </button>
+            </div>
+          </div>
+          <div id="history-list" class="history-list"></div>
+        </section>
+
+        <section class="panel" id="planning">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">План</p>
+              <h2>Как закрыть долг</h2>
+            </div>
+          </div>
+          <form id="plan-form" class="stack-form">
+            <label>
+              Режим планирования
+              <select id="plan-mode">
+                <option value="deadline">По сроку</option>
+                <option value="daily_load">По дневной нагрузке</option>
+              </select>
+            </label>
+            <div id="deadline-fields">
+              <label>
+                Дедлайн
+                <input type="date" id="plan-deadline" />
+              </label>
+            </div>
+            <div id="daily-load-fields" hidden>
+              <label>
+                Сколько намазов в день
+                <input
+                  type="number"
+                  id="plan-daily-load"
+                  min="1"
+                  value="5"
+                  step="1"
+                  inputmode="numeric"
+                />
+              </label>
+            </div>
+            <button class="button" type="submit">Обновить план</button>
+          </form>
+          <div class="mini-grid" id="plan-results"></div>
+        </section>
+
+        <section class="panel" id="reminders">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Напоминания</p>
+              <h2>Ежедневный режим</h2>
+            </div>
+          </div>
+          <form id="reminders-form" class="stack-form">
+            <label class="checkbox-row">
+              <input type="checkbox" id="reminder-enabled" />
+              <span>Показывать ежедневное напоминание</span>
+            </label>
+            <label>
+              Время напоминания
+              <input type="time" id="reminder-time" />
+            </label>
+            <label>
+              Текст напоминания
+              <select id="reminder-message"></select>
+            </label>
+            <div class="inline-actions">
+              <button class="button" type="submit">Сохранить</button>
+              <button class="button button--ghost" type="button" id="request-notifications">
+                Разрешить уведомления
+              </button>
+            </div>
+          </form>
+          <div class="mini-grid" id="reminder-status"></div>
+        </section>
+
+        <section class="panel" id="library">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Мотивация</p>
+              <h2>Подборка текстов</h2>
+            </div>
+          </div>
+          <div class="library-grid" id="library-list"></div>
+        </section>
+
+        <section class="panel" id="backup">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">Резерв</p>
+              <h2>Экспорт и импорт</h2>
+            </div>
+          </div>
+          <div class="backup-actions">
+            <button class="button" id="export-data" type="button">
+              Экспортировать JSON
+            </button>
+            <label class="button button--ghost file-label" for="import-file">
+              Импортировать JSON
+            </label>
+            <input id="import-file" type="file" accept="application/json" hidden />
+          </div>
+          <div class="mini-grid" id="backup-status"></div>
+        </section>
+      </main>
+    </div>
+
+    <template id="stat-card-template">
+      <article class="stat-card">
+        <span class="stat-card__label"></span>
+        <strong class="stat-card__value"></strong>
+        <small class="stat-card__hint"></small>
+      </article>
+    </template>
+
+    <script src="./data/content.js"></script>
+    <script src="./app.js" defer></script>
+  </body>
+</html>
