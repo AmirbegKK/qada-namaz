@@ -659,6 +659,10 @@ button:focus-visible {
     gap: 10px;
   }
 
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .stat-card,
   .quote-card,
   .history-item,
@@ -670,6 +674,10 @@ button:focus-visible {
   .stat-card__value {
     margin: 6px 0 4px;
     font-size: 1.45rem;
+  }
+
+  .stat-card__hint {
+    display: none;
   }
 
   .progress-panel {
