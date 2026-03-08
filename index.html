@@ -117,6 +117,26 @@
               <input type="checkbox" id="include-witr" />
               <span>Добавить витр в расчёт и учёт</span>
             </label>
+            <label class="checkbox-row">
+              <input type="checkbox" id="include-hayd" />
+              <span>Учитывать хайд</span>
+            </label>
+            <div id="hayd-fields" hidden>
+              <label>
+                Среднее число дней хайда в месяц
+                <input
+                  type="number"
+                  id="average-hayd-days"
+                  value="0"
+                  min="0"
+                  step="1"
+                  inputmode="numeric"
+                />
+              </label>
+              <p class="field-hint">
+                Расчёт ориентировочный: приложение пропорционально вычитает среднее число дней за период.
+              </p>
+            </div>
             <label>
               Ручная корректировка общего долга
               <input

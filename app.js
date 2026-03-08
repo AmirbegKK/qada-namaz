@@ -14,6 +14,8 @@ const DEFAULT_STATE = {
     startDate: formatDateLocal(new Date()),
     endDate: formatDateLocal(new Date()),
     includeWitr: false,
+    includeHayd: false,
+    averageHaydDaysPerMonth: 0,
     manualAdjustment: 0
   },
   progressLog: [],
@@ -60,6 +62,9 @@ const elements = {
   startDate: document.getElementById("start-date"),
   endDate: document.getElementById("end-date"),
   includeWitr: document.getElementById("include-witr"),
+  includeHayd: document.getElementById("include-hayd"),
+  haydFields: document.getElementById("hayd-fields"),
+  averageHaydDays: document.getElementById("average-hayd-days"),
   manualAdjustment: document.getElementById("manual-adjustment"),
   calculationBreakdown: document.getElementById("calculation-breakdown"),
   progressForm: document.getElementById("progress-form"),
@@ -107,6 +112,7 @@ function bindEvents() {
   elements.importFile.addEventListener("change", handleImportFile);
   elements.requestNotifications.addEventListener("click", requestNotificationsPermission);
   elements.planMode.addEventListener("change", togglePlanFields);
+  elements.includeHayd.addEventListener("change", toggleHaydFields);
   elements.installApp.addEventListener("click", promptInstall);
   elements.toggleMinimal.addEventListener("click", toggleMinimalMode);
 
@@ -131,6 +137,8 @@ function hydrateForms() {
   elements.startDate.value = state.settings.startDate;
   elements.endDate.value = state.settings.endDate;
   elements.includeWitr.checked = state.settings.includeWitr;
+  elements.includeHayd.checked = state.settings.includeHayd;
+  elements.averageHaydDays.value = state.settings.averageHaydDaysPerMonth;
   elements.manualAdjustment.value = state.settings.manualAdjustment;
   elements.progressDate.value = formatDateLocal(new Date());
   elements.planMode.value = state.plan.mode;
@@ -139,6 +147,7 @@ function hydrateForms() {
   elements.reminderEnabled.checked = state.reminderSettings.enabled;
   elements.reminderTime.value = state.reminderSettings.time;
   elements.reminderMessage.value = String(state.reminderSettings.messageIndex);
+  toggleHaydFields();
   togglePlanFields();
 }
 
@@ -169,12 +178,15 @@ function handleSettingsSubmit(event) {
     startDate: elements.startDate.value,
     endDate: elements.endDate.value,
     includeWitr: elements.includeWitr.checked,
+    includeHayd: elements.includeHayd.checked,
+    averageHaydDaysPerMonth: Math.max(0, Number(elements.averageHaydDays.value) || 0),
     manualAdjustment: Number(elements.manualAdjustment.value) || 0
   };
   if (new Date(state.settings.startDate) > new Date(state.settings.endDate)) {
     state.settings.endDate = state.settings.startDate;
     elements.endDate.value = state.settings.endDate;
   }
+  toggleHaydFields();
   populatePrayerOptions();
   persistAndRender();
 }
@@ -355,10 +367,16 @@ function renderCalculation() {
   const metrics = calculateMetrics(state);
   const breakdown = Object.entries(metrics.perPrayer).map(([type, prayerMetrics]) => ({
     label: PRAYER_LABELS[type],
-    value: `${prayerMetrics.remaining}/${prayerMetrics.total}`,
-    hint: "Осталось / всего"
+    value: String(prayerMetrics.remaining),
+    hint: ""
   }));
   mountMiniCards(elements.calculationBreakdown, breakdown);
+  if (metrics.haydDaysApplied > 0) {
+    const note = document.createElement("div");
+    note.className = "calculation-note";
+    note.textContent = `Хайд учтён: примерно ${metrics.haydDaysApplied} ${pluralize(metrics.haydDaysApplied, ["день", "дня", "дней"])} за период.`;
+    elements.calculationBreakdown.appendChild(note);
+  }
 }
 
 function renderQuickActions() {
@@ -459,6 +477,11 @@ function renderPlan() {
         }
       ];
   mountMiniCards(elements.planResults, planCards);
+}
+
+function toggleHaydFields() {
+  const enabled = elements.includeHayd.checked;
+  elements.haydFields.hidden = !enabled;
 }
 
 function renderReminders() {
@@ -630,9 +653,11 @@ function calculateMetrics(currentState) {
   const settings = currentState.settings;
   const enabledPrayerTypes = getEnabledPrayerTypes(settings.includeWitr);
   const daysCount = countInclusiveDays(settings.startDate, settings.endDate);
-  const automaticTotal = daysCount * enabledPrayerTypes.length;
+  const haydDaysApplied = calculateHaydDays(settings.startDate, settings.endDate, settings);
+  const effectiveDaysCount = Math.max(daysCount - haydDaysApplied, 0);
+  const automaticTotal = effectiveDaysCount * enabledPrayerTypes.length;
   const totalDebt = Math.max(0, automaticTotal + Number(settings.manualAdjustment || 0));
-  const basePerPrayer = buildPerPrayerBase(daysCount, enabledPrayerTypes, totalDebt);
+  const basePerPrayer = buildPerPrayerBase(effectiveDaysCount, enabledPrayerTypes, totalDebt);
   const progressByPrayer = sumProgressByPrayer(currentState.progressLog);
 
   const perPrayer = {};
@@ -659,6 +684,8 @@ function calculateMetrics(currentState) {
     completedApplied,
     remainingTotal,
     perPrayer,
+    haydDaysApplied,
+    effectiveDaysCount,
     progressPercent,
     completedToday,
     remainingTodayGoal,
@@ -697,6 +724,19 @@ function buildPerPrayerBase(daysCount, enabledPrayerTypes, totalDebt) {
   }
 
   return base;
+}
+
+function calculateHaydDays(startDate, endDate, settings) {
+  if (!settings.includeHayd) {
+    return 0;
+  }
+  const averageHaydDaysPerMonth = Math.max(0, Number(settings.averageHaydDaysPerMonth) || 0);
+  if (averageHaydDaysPerMonth === 0) {
+    return 0;
+  }
+  const daysCount = countInclusiveDays(startDate, endDate);
+  const monthsInPeriod = daysCount / 30.4375;
+  return Math.min(daysCount, Math.round(monthsInPeriod * averageHaydDaysPerMonth));
 }
 
 function calculatePlan(planState, remainingTotal) {
@@ -771,6 +811,7 @@ function mountMiniCards(container, cards) {
     node.querySelector(".stat-card__label").textContent = card.label;
     node.querySelector(".stat-card__value").textContent = card.value;
     node.querySelector(".stat-card__hint").textContent = card.hint;
+    node.querySelector(".stat-card__hint").hidden = !card.hint;
     container.appendChild(node);
   });
 }

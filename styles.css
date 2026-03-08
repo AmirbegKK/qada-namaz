@@ -219,6 +219,10 @@ body::before {
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
 
+#calculation .mini-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .library-grid {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
@@ -238,6 +242,19 @@ body::before {
 .quote-card__source,
 .notice {
   color: var(--muted);
+}
+
+.field-hint,
+.calculation-note {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.calculation-note {
+  grid-column: 1 / -1;
+  padding: 2px 2px 0;
+  font-size: 0.95rem;
 }
 
 .stat-card__value {
@@ -589,6 +606,10 @@ button:focus-visible {
   .onboarding__steps {
     grid-template-columns: 1fr;
   }
+
+  #calculation .mini-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 700px) {
@@ -672,6 +693,10 @@ button:focus-visible {
   }
 
   .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #calculation .mini-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
